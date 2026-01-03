@@ -15,6 +15,7 @@ class FilamentUserbackServiceProvider extends PackageServiceProvider
     {
         $package
             ->name(static::$name)
-            ->hasViews();
+            ->hasViews()
+            ->hasConfigFile();
     }
 }

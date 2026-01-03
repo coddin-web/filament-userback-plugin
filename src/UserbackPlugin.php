@@ -13,7 +13,7 @@ use Illuminate\Contracts\View\View;
 
 class UserbackPlugin implements Plugin
 {
-    protected string $accessToken = '';
+    protected ?string $accessToken = null;
 
     protected ?Closure $userDataUsing = null;
 
@@ -52,11 +52,16 @@ class UserbackPlugin implements Plugin
             fn (): View => view(
                 'filament-userback::userback',
                 [
-                    'accessToken' => $this->accessToken,
+                    'accessToken' => $this->getAccessToken(),
                     'userData' => $this->getUserData(),
                 ],
             ),
         );
+    }
+
+    protected function getAccessToken(): ?string
+    {
+        return $this->accessToken ?? config('filament-userback.access_token');
     }
 
     /**
