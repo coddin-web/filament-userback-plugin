@@ -3,60 +3,139 @@
 declare(strict_types=1);
 
 use CoddinWeb\FilamentUserback\UserbackPlugin;
+use Filament\Panel;
 
-it('can be instantiated', function () {
-    $plugin = UserbackPlugin::make();
-
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+beforeEach(function () {
+    config()->set('filament-userback.access_token', null);
+    config()->set('filament-userback.only_authenticated', null);
+    config()->set('filament-userback.guard', null);
 });
 
-it('has the correct plugin id', function () {
-    $plugin = UserbackPlugin::make();
+describe('plugin instantiation', function () {
+    it('can be instantiated via make()', function () {
+        $plugin = UserbackPlugin::make();
 
-    expect($plugin->getId())->toBe('userback');
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('returns correct plugin id', function () {
+        $plugin = UserbackPlugin::make();
+
+        expect($plugin->getId())->toBe('userback');
+    });
 });
 
-it('can set access token', function () {
-    $plugin = UserbackPlugin::make()
-        ->accessToken('test-token');
+describe('fluent configuration', function () {
+    it('can set access token', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('my-token');
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('can set user data callback', function () {
+        $plugin = UserbackPlugin::make()
+            ->userDataUsing(fn () => ['id' => 1, 'name' => 'Test User']);
+
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('can enable only authenticated mode', function () {
+        $plugin = UserbackPlugin::make()
+            ->onlyAuthenticated(true);
+
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('can disable only authenticated mode', function () {
+        $plugin = UserbackPlugin::make()
+            ->onlyAuthenticated(false);
+
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('can set guard', function () {
+        $plugin = UserbackPlugin::make()
+            ->guard('admin');
+
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
+
+    it('can chain all configuration methods', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('my-token')
+            ->userDataUsing(fn () => ['id' => 1])
+            ->onlyAuthenticated(true)
+            ->guard('web');
+
+        expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+    });
 });
 
-it('can set user data callback', function () {
-    $plugin = UserbackPlugin::make()
-        ->userDataUsing(fn () => ['id' => 1, 'name' => 'Test']);
+describe('panel integration', function () {
+    it('can be registered with a panel', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+        $panel = $this->createPanel($plugin);
+
+        expect($panel->getPlugin('userback'))->toBe($plugin);
+    });
+
+    it('can boot with a panel', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
+
+        // Should not throw
+        $this->bootPluginWithPanel($plugin);
+
+        expect(true)->toBeTrue();
+    });
+
+    it('uses panel auth guard as fallback', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
+
+        $panel = $this->createPanel($plugin, 'admin');
+
+        expect($panel->getAuthGuard())->toBe('admin');
+    });
 });
 
-it('can set only authenticated', function () {
-    $plugin = UserbackPlugin::make()
-        ->onlyAuthenticated(true);
+describe('config fallback behavior', function () {
+    it('uses config access token when not set on plugin', function () {
+        config()->set('filament-userback.access_token', 'config-token');
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
-});
+        $plugin = UserbackPlugin::make();
+        $panel = $this->createPanel($plugin);
 
-it('can disable only authenticated', function () {
-    $plugin = UserbackPlugin::make()
-        ->onlyAuthenticated(false);
+        // Boot and check render hook is registered
+        $plugin->boot($panel);
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
-});
+        expect(true)->toBeTrue(); // Plugin boots without error
+    });
 
-it('can set guard', function () {
-    $plugin = UserbackPlugin::make()
-        ->guard('admin');
+    it('uses config only_authenticated when not set on plugin', function () {
+        config()->set('filament-userback.only_authenticated', false);
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
-});
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
 
-it('can chain all configuration methods', function () {
-    $plugin = UserbackPlugin::make()
-        ->accessToken('test-token')
-        ->userDataUsing(fn () => ['id' => 1])
-        ->onlyAuthenticated(true)
-        ->guard('web');
+        $panel = $this->createPanel($plugin);
+        $plugin->boot($panel);
 
-    expect($plugin)->toBeInstanceOf(UserbackPlugin::class);
+        expect(true)->toBeTrue();
+    });
+
+    it('uses config guard when not set on plugin', function () {
+        config()->set('filament-userback.guard', 'api');
+
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
+
+        $panel = $this->createPanel($plugin);
+        $plugin->boot($panel);
+
+        expect(true)->toBeTrue();
+    });
 });

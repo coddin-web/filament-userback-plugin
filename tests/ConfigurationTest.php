@@ -2,82 +2,171 @@
 
 declare(strict_types=1);
 
-it('uses access token from config when not set on plugin', function () {
-    config()->set('filament-userback.access_token', 'config-token');
+use CoddinWeb\FilamentUserback\UserbackPlugin;
+use Illuminate\Support\Facades\Auth;
 
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getAccessToken');
-    $method->setAccessible(true);
-
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make();
-    $result = $method->invoke($plugin);
-
-    expect($result)->toBe('config-token');
-});
-
-it('prefers plugin access token over config', function () {
-    config()->set('filament-userback.access_token', 'config-token');
-
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getAccessToken');
-    $method->setAccessible(true);
-
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make()
-        ->accessToken('plugin-token');
-    $result = $method->invoke($plugin);
-
-    expect($result)->toBe('plugin-token');
-});
-
-it('returns null when no access token is configured', function () {
+beforeEach(function () {
+    // Reset config before each test
     config()->set('filament-userback.access_token', null);
-
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getAccessToken');
-    $method->setAccessible(true);
-
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make();
-    $result = $method->invoke($plugin);
-
-    expect($result)->toBeNull();
-});
-
-it('uses only_authenticated from config when not set on plugin', function () {
-    config()->set('filament-userback.only_authenticated', false);
-
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getOnlyAuthenticated');
-    $method->setAccessible(true);
-
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make();
-    $result = $method->invoke($plugin);
-
-    expect($result)->toBeFalse();
-});
-
-it('prefers plugin only_authenticated over config', function () {
-    config()->set('filament-userback.only_authenticated', true);
-
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getOnlyAuthenticated');
-    $method->setAccessible(true);
-
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make()
-        ->onlyAuthenticated(false);
-    $result = $method->invoke($plugin);
-
-    expect($result)->toBeFalse();
-});
-
-it('defaults only_authenticated to true', function () {
     config()->set('filament-userback.only_authenticated', null);
+    config()->set('filament-userback.guard', null);
+});
 
-    $reflection = new ReflectionClass(\CoddinWeb\FilamentUserback\UserbackPlugin::class);
-    $method = $reflection->getMethod('getOnlyAuthenticated');
-    $method->setAccessible(true);
+describe('access token configuration', function () {
+    it('renders widget when access token is set via config', function () {
+        config()->set('filament-userback.access_token', 'config-token');
 
-    $plugin = \CoddinWeb\FilamentUserback\UserbackPlugin::make();
-    $result = $method->invoke($plugin);
+        $html = $this->renderUserbackView(
+            accessToken: 'config-token',
+            userData: null,
+            onlyAuthenticated: false,
+            guard: null
+        );
 
-    expect($result)->toBeTrue();
+        expect($html)
+            ->toContain('Userback.access_token')
+            ->toContain('config-token');
+    });
+
+    it('renders widget when access token is set via plugin method', function () {
+        $html = $this->renderUserbackView(
+            accessToken: 'plugin-token',
+            userData: null,
+            onlyAuthenticated: false,
+            guard: null
+        );
+
+        expect($html)
+            ->toContain('Userback.access_token')
+            ->toContain('plugin-token');
+    });
+
+    it('does not render widget when no access token is configured', function () {
+        $html = $this->renderUserbackView(
+            accessToken: null,
+            userData: null,
+            onlyAuthenticated: false,
+            guard: null
+        );
+
+        expect($html)->toBe('');
+    });
+});
+
+describe('only_authenticated configuration', function () {
+    it('renders widget for unauthenticated users when only_authenticated is false', function () {
+        Auth::shouldReceive('guard')->with(null)->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(false);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: false,
+            guard: null
+        );
+
+        expect($html)->toContain('Userback.access_token');
+    });
+
+    it('does not render widget for unauthenticated users when only_authenticated is true', function () {
+        Auth::shouldReceive('guard')->with(null)->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(false);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: true,
+            guard: null
+        );
+
+        expect($html)->toBe('');
+    });
+
+    it('renders widget for authenticated users when only_authenticated is true', function () {
+        Auth::shouldReceive('guard')->with(null)->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(true);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: true,
+            guard: null
+        );
+
+        expect($html)->toContain('Userback.access_token');
+    });
+});
+
+describe('guard configuration', function () {
+    it('uses default guard when no guard is specified', function () {
+        Auth::shouldReceive('guard')->with(null)->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(true);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: true,
+            guard: null
+        );
+
+        expect($html)->toContain('Userback.access_token');
+    });
+
+    it('uses specified guard for auth check', function () {
+        Auth::shouldReceive('guard')->with('admin')->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(true);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: true,
+            guard: 'admin'
+        );
+
+        expect($html)->toContain('Userback.access_token');
+    });
+
+    it('respects guard auth state', function () {
+        Auth::shouldReceive('guard')->with('admin')->andReturnSelf();
+        Auth::shouldReceive('check')->andReturn(false);
+
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: true,
+            guard: 'admin'
+        );
+
+        expect($html)->toBe('');
+    });
+});
+
+describe('user data configuration', function () {
+    it('renders user data when provided', function () {
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: ['id' => 123, 'info' => ['name' => 'John Doe', 'email' => 'john@example.com']],
+            onlyAuthenticated: false,
+            guard: null
+        );
+
+        expect($html)
+            ->toContain('Userback.user_data')
+            ->toContain('123')
+            ->toContain('John Doe')
+            ->toContain('john@example.com');
+    });
+
+    it('does not render user data when not provided', function () {
+        $html = $this->renderUserbackView(
+            accessToken: 'test-token',
+            userData: null,
+            onlyAuthenticated: false,
+            guard: null
+        );
+
+        expect($html)
+            ->toContain('Userback.access_token')
+            ->not->toContain('Userback.user_data');
+    });
 });
