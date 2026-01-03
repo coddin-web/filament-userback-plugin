@@ -1,5 +1,4 @@
-@auth
-@if($accessToken)
+@if(\is_string($accessToken))
 <script>
     window.Userback = window.Userback || {};
     Userback.access_token = @js($accessToken);
@@ -14,4 +13,3 @@
     })(document);
 </script>
 @endif
-@endauth

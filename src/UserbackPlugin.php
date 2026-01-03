@@ -10,6 +10,7 @@ use Filament\Panel;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Config;
 
 class UserbackPlugin implements Plugin
 {
@@ -76,7 +77,16 @@ class UserbackPlugin implements Plugin
      */
     protected function getAccessToken(): ?string
     {
-        return $this->accessToken ?? config('filament-userback.access_token');
+        if (\is_string($this->accessToken)) {
+            return $this->accessToken;
+        }
+
+        $globalAccessToken = Config::get('filament-userback.access_token');
+        if (\is_string($globalAccessToken)) {
+            return $globalAccessToken;
+        }
+
+        return null;
     }
 
     /**
