@@ -1,4 +1,4 @@
-@if(\is_string($accessToken))
+@if(\is_string($accessToken) && (!$onlyAuthenticated || auth($guard)->check()))
 <script>
     window.Userback = window.Userback || {};
     Userback.access_token = @js($accessToken);
