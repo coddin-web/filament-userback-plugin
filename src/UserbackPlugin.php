@@ -16,6 +16,10 @@ class UserbackPlugin implements Plugin
 {
     protected ?string $accessToken = null;
 
+    protected ?bool $onlyAuthenticated = null;
+
+    protected ?string $guard = null;
+
     protected ?Closure $userDataUsing = null;
 
     public static function make(): static
@@ -42,6 +46,20 @@ class UserbackPlugin implements Plugin
         return $this;
     }
 
+    public function onlyAuthenticated(bool $onlyAuthenticated = true): static
+    {
+        $this->onlyAuthenticated = $onlyAuthenticated;
+
+        return $this;
+    }
+
+    public function guard(?string $guard): static
+    {
+        $this->guard = $guard;
+
+        return $this;
+    }
+
     public function register(Panel $panel): void
     {
     }
@@ -63,6 +81,8 @@ class UserbackPlugin implements Plugin
                 [
                     'accessToken' => $this->getAccessToken(),
                     'userData' => $this->getUserData(),
+                    'onlyAuthenticated' => $this->getOnlyAuthenticated(),
+                    'guard' => $this->getGuard($panel),
                 ],
             ),
         );
@@ -87,6 +107,31 @@ class UserbackPlugin implements Plugin
         }
 
         return null;
+    }
+
+    protected function getOnlyAuthenticated(): bool
+    {
+        if (\is_bool($this->onlyAuthenticated)) {
+            return $this->onlyAuthenticated;
+        }
+
+        $configValue = Config::get('filament-userback.only_authenticated');
+
+        return \is_bool($configValue) ? $configValue : true;
+    }
+
+    protected function getGuard(Panel $panel): ?string
+    {
+        if (\is_string($this->guard)) {
+            return $this->guard;
+        }
+
+        $configGuard = Config::get('filament-userback.guard');
+        if (\is_string($configGuard)) {
+            return $configGuard;
+        }
+
+        return $panel->getAuthGuard();
     }
 
     /**

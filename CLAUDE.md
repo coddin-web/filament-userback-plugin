@@ -32,6 +32,15 @@ The `accessToken` can be set:
 1. **Globally** via `config/filament-userback.php` - applies to all panels
 2. **Per-panel** via `->accessToken()` method - overrides global config
 
+The `only_authenticated` setting controls whether the widget is shown only to authenticated users:
+1. **Globally** via `config/filament-userback.php` (default: `true`)
+2. **Per-panel** via `->onlyAuthenticated()` method - overrides global config
+
+The `guard` setting specifies which authentication guard to use:
+1. **Per-panel** via `->guard()` method - highest priority
+2. **Globally** via `config/filament-userback.php`
+3. **Fallback** to the panel's configured auth guard (`$panel->getAuthGuard()`)
+
 ## Common Tasks
 
 ### Testing the plugin locally
