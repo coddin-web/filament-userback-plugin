@@ -139,3 +139,43 @@ describe('config fallback behavior', function () {
         expect(true)->toBeTrue();
     });
 });
+
+describe('guard validation', function () {
+    it('boots without error when guard is valid', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token')
+            ->guard('web');
+
+        $panel = $this->createPanel($plugin);
+        $plugin->boot($panel);
+
+        expect(true)->toBeTrue();
+    });
+
+    it('boots without error when guard is invalid', function () {
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token')
+            ->guard('nonexistent-guard');
+
+        $panel = $this->createPanel($plugin);
+
+        // Should not throw - invalid guard is converted to null
+        $plugin->boot($panel);
+
+        expect(true)->toBeTrue();
+    });
+
+    it('boots without error when config guard is invalid', function () {
+        config()->set('filament-userback.guard', 'nonexistent-guard');
+
+        $plugin = UserbackPlugin::make()
+            ->accessToken('test-token');
+
+        $panel = $this->createPanel($plugin);
+
+        // Should not throw - invalid guard is converted to null
+        $plugin->boot($panel);
+
+        expect(true)->toBeTrue();
+    });
+});

@@ -122,16 +122,28 @@ class UserbackPlugin implements Plugin
 
     protected function getGuard(Panel $panel): ?string
     {
+        $guard = null;
+
         if (\is_string($this->guard)) {
-            return $this->guard;
+            $guard = $this->guard;
+        } elseif (\is_string($configGuard = Config::get('filament-userback.guard'))) {
+            $guard = $configGuard;
+        } else {
+            $guard = $panel->getAuthGuard();
         }
 
-        $configGuard = Config::get('filament-userback.guard');
-        if (\is_string($configGuard)) {
-            return $configGuard;
+        return $this->isValidGuard($guard) ? $guard : null;
+    }
+
+    protected function isValidGuard(?string $guard): bool
+    {
+        if ($guard === null) {
+            return true;
         }
 
-        return $panel->getAuthGuard();
+        $guards = Config::get('auth.guards', []);
+
+        return \is_array($guards) && \array_key_exists($guard, $guards);
     }
 
     /**
