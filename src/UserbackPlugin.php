@@ -45,6 +45,14 @@ class UserbackPlugin implements Plugin
     {
     }
 
+    /**
+     * Registers a render hook that injects the Userback view into the panel head.
+     *
+     * The hook renders the 'filament-userback::userback' view and provides it with
+     * the resolved access token and user data.
+     *
+     * @param Panel $panel The panel instance being booted.
+     */
     public function boot(Panel $panel): void
     {
         FilamentView::registerRenderHook(
@@ -59,6 +67,13 @@ class UserbackPlugin implements Plugin
         );
     }
 
+    /**
+     * Retrieve the plugin access token.
+     *
+     * Returns the explicitly configured access token if set; otherwise returns the value from config('filament-userback.access_token').
+     *
+     * @return string|null The access token, or null if none is configured.
+     */
     protected function getAccessToken(): ?string
     {
         return $this->accessToken ?? config('filament-userback.access_token');
