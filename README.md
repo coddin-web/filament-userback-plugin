@@ -2,6 +2,8 @@
 
 A Filament plugin for integrating [Userback](https://userback.io) feedback widget.
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/coddin-web/filament-userback-plugin?utm_source=oss&utm_medium=github&utm_campaign=coddin-web%2Ffilament-userback-plugin&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 ## Installation
 
 ```bash
