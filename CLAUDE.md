@@ -8,7 +8,7 @@ This is a Filament plugin that integrates the Userback widget into Filament pane
 
 ## Project Structure
 
-```
+```txt
 ├── src/
 │   ├── FilamentUserbackServiceProvider.php  # Laravel service provider
 │   └── UserbackPlugin.php                   # Main Filament plugin class
